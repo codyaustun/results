@@ -38,7 +38,8 @@ DECAY_STEPS=${DECAY_STEPS:-40}
 echo "running benchmark"
 
 # run training
-python -m torch.distributed.launch --nproc_per_node $SLURM_NTASKS_PER_NODE $MULTI_NODE train.py \
+python -m torch.distributed.launch --nproc_per_node $SLURM_NTASKS_PER_NODE $MULTI_NODE eval.py \
+  --resume model_best.pth \
   --save ${RESULTS_DIR} \
   --dataset-dir ${DATASET_DIR} \
   --target-bleu $TARGET \

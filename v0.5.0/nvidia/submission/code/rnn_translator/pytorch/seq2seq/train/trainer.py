@@ -2,6 +2,7 @@ import logging
 import time
 import os
 from itertools import cycle
+from collections import OrderedDict
 
 import apex
 import torch
@@ -15,6 +16,16 @@ from seq2seq.train.lr_scheduler import WarmupMultiStepLR
 from seq2seq.utils import AverageMeter
 from seq2seq.utils import gnmt_print
 from seq2seq.utils import sync_workers
+
+
+def fix_state(state):
+    new_state = OrderedDict()
+    for key, value in state.items():
+        if key.startswith('module'):
+            key = '.'.join(key.split('.')[1:])
+
+        new_state[key] = value
+    return new_state
 
 
 class Seq2SeqTrainer:
@@ -311,10 +322,10 @@ class Seq2SeqTrainer:
         """
         if os.path.isfile(filename):
             checkpoint = torch.load(filename, map_location={'cuda:0': 'cpu'})
-            self.model.load_state_dict(checkpoint['state_dict'])
+            self.model.load_state_dict(fix_state(checkpoint['state_dict']))
             self.fp_optimizer.initialize_model(self.model)
-            self.optimizer.load_state_dict(checkpoint['optimizer'])
-            self.scheduler.load_state_dict(checkpoint['scheduler'])
+            self.optimizer.load_state_dict(fix_state(checkpoint['optimizer']))
+            self.scheduler.load_state_dict(fix_state(checkpoint['scheduler']))
             self.epoch = checkpoint['epoch']
             self.loss = checkpoint['loss']
             logging.info(f'Loaded checkpoint {filename} (epoch {self.epoch})')
